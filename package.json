@@ -1,0 +1,15 @@
+{
+  "name": "remote-request",
+  "version": "1.0.0",
+  "description": "Utility object for making a remote request the Rails UJS way.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "remote",
+    "request"
+  ],
+  "author": "Nipun Paradkar",
+  "license": "ISC"
+}
