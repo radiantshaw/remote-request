@@ -24,12 +24,21 @@ export default class RemoteRequest {
 
     const xhr = new XMLHttpRequest();
     xhr.open(this.method, this.url);
-    xhr.send();
+
+    if (body && !this.isMethodGet()) {
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    }
+
+    xhr.send(body);
   }
 
   private isMethodUnsupported() {
     return ![
       "GET", "POST", "PUT", "PATCH", "DELETE"
     ].includes(this.method);
+  }
+
+  private isMethodGet() {
+    return this.method == "GET";
   }
 }

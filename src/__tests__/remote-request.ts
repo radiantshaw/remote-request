@@ -123,6 +123,20 @@ describe("send()", function() {
           "string with a GET request."
       ));
     });
+
+    it.each([
+      ["GET"], ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("doesn't set Content-Type for %s request", function(method) {
+      expect.assertions(1)
+
+      mock.use(method, "/unset-content-type", function(req, res) {
+        expect(req.header("Content-Type")).toBeNull();
+
+        return res.status(200);
+      });
+
+      new RemoteRequest("/unset-content-type", method).send();
+    });
   });
 
   describe("when body is a string", function() {
@@ -140,6 +154,34 @@ describe("send()", function() {
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
       ));
+    });
+
+    it("doesn't set Content-Type for GET request", function() {
+      expect.assertions(1)
+
+      mock.get("/unset-content-type", function(req, res) {
+        expect(req.header("Content-Type")).toBeNull();
+
+        return res.status(200);
+      });
+
+      new RemoteRequest("/unset-content-type", "GET")
+        .send("first_name=Diana&last_name=Prince");
+    });
+
+    it.each([
+      ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("sets Content-Type: application/x-www-form-urlencoded for %s request", function(method) {
+      expect.assertions(1)
+
+      mock.use(method, "/urlencoded-content-type", function(req, res) {
+        expect(req.header("Content-Type")).toEqual("application/x-www-form-urlencoded");
+
+        return res.status(200);
+      });
+
+      new RemoteRequest("/urlencoded-content-type", method)
+        .send("first_name=Diana&last_name=Prince");
     });
   });
 
@@ -174,6 +216,25 @@ describe("send()", function() {
 
       expect(function() {
         new RemoteRequest("/form-data", method).send(formData);
+      }).not.toThrow(new Error(
+        "`body` can only be an application/x-www-form-urlencoded " +
+          "string with a GET request."
+      ));
+    });
+
+    it.each([
+      ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("sets Content-Type: multipart/form-data for %s request", function(method) {
+      mock.use(method, "/content-type-form-data", function(req, res) {
+        return res.status(200);
+      });
+
+      const formData = new FormData();
+      formData.append("first_name", "Clark");
+      formData.append("last_name", "Kent");
+
+      expect(function() {
+        new RemoteRequest("/content-type-form-data", method).send(formData);
       }).not.toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
