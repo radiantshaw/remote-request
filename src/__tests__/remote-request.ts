@@ -1,6 +1,6 @@
 import mock from "xhr-mock";
 
-import RemoteRequest from "../remote-request";
+import RemoteRequest, { ResponseType } from "../remote-request";
 
 beforeAll(function() {
   mock.setup()
@@ -239,6 +239,44 @@ describe("send()", function() {
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
       ));
+    });
+  });
+
+  describe("when responseType is not passed", function() {
+    it("sets Accept: application/json, text/javascript by default", function() {
+      expect.assertions(1);
+
+      mock.get("/default-response-type", function(req, res) {
+        expect(req.header("Accept")).toEqual("application/json, text/javascript");
+
+        return res.status(200);
+      });
+
+      new RemoteRequest("/default-response-type").send();
+    });
+  });
+
+  describe.each([
+    ["ResponseType.All", ResponseType.All, "*/*"],
+    ["ResponseType.Text", ResponseType.Text, "text/plain"],
+    ["ResponseType.HTML", ResponseType.HTML, "text/html"],
+    ["ResponseType.XML", ResponseType.XML, "application/xml, text/xml"],
+    ["ResponseType.JSON", ResponseType.JSON, "application/json, text/javascript"],
+    [
+      "ResponseType.Script", ResponseType.Script,
+      "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript"
+    ]
+  ])("when responseType is passed as %s", function(_, responseType, accept) {
+    it("sets Accept: " + accept, function() {
+      expect.assertions(1);
+
+      mock.get("/custom-response-type", function(req, res) {
+        expect(req.header("Accept")).toEqual(accept);
+
+        return res.status(200);
+      });
+
+      new RemoteRequest("/custom-response-type").send(null, responseType);
     });
   });
 });

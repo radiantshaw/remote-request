@@ -1,3 +1,12 @@
+export enum ResponseType {
+  All = "*/*",
+  Text = "text/plain",
+  HTML = "text/html",
+  XML = "application/xml, text/xml",
+  Script = "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript",
+  JSON = "application/json, text/javascript"
+}
+
 export default class RemoteRequest {
   private method: string;
   private url: string;
@@ -14,7 +23,7 @@ export default class RemoteRequest {
     this.url = url;
   }
 
-  send(body?: string | FormData) {
+  send(body?: string | FormData, responseType = ResponseType.JSON) {
     if (this.method == "GET" && body instanceof FormData) {
       throw new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
@@ -28,6 +37,8 @@ export default class RemoteRequest {
     if (body && !this.isMethodGet()) {
       xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     }
+
+    xhr.setRequestHeader("Accept", responseType);
 
     xhr.send(body);
   }
