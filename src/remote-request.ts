@@ -1,26 +1,35 @@
 export default class RemoteRequest {
-  private xhr: XMLHttpRequest;
+  private method: string;
+  private url: string;
 
   constructor(url: string, method = "GET") {
-    if (this.isMethodUnsupported(method)) {
+    this.method = method.toUpperCase();
+    if (this.isMethodUnsupported()) {
       throw new Error(
         "`method` unsupported. " +
           "Supported methods: GET|POST|PUT|PATCH|DELETE (case insensitively)."
       );
     }
 
-    this.xhr = new XMLHttpRequest();
-    this.xhr.open(method, url);
+    this.url = url;
   }
 
-  send() {
-    this.xhr.send();
+  send(body?: string | FormData) {
+    if (this.method == "GET" && body instanceof FormData) {
+      throw new Error(
+        "`body` can only be an application/x-www-form-urlencoded " +
+          "string with a GET request."
+      );
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open(this.method, this.url);
+    xhr.send();
   }
 
-  private isMethodUnsupported(method: string) {
+  private isMethodUnsupported() {
     return ![
-      "get", "GET", "post", "POST",
-      "put", "PUT", "patch", "PATCH", "delete", "DELETE"
-    ].includes(method);
+      "GET", "POST", "PUT", "PATCH", "DELETE"
+    ].includes(this.method);
   }
 }

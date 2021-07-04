@@ -106,3 +106,55 @@ describe("constructor()", function() {
     ));
   });
 });
+
+describe("send()", function() {
+  it("throws an error for GET request when body is FormData", function() {
+    mock.get("/not-url-encoded-data", function(req, res) {
+      return res.status(200);
+    });
+
+    const formData = new FormData();
+    formData.append("first_name", "Clark");
+    formData.append("last_name", "Kent");
+
+    ["get", "GET"].forEach(function(method) {
+      expect(function() {
+        new RemoteRequest("/not-url-encoded-data", method).send(formData);
+      }).toThrow(new Error(
+        "`body` can only be an application/x-www-form-urlencoded " +
+          "string with a GET request."
+      ));
+    });
+  });
+
+  it("doesn't throw an error for GET request when body is URL encoded string", function() {
+    mock.get("/url-encoded-data", function(req, res) {
+      return res.status(200);
+    });
+
+    ["get", "GET"].forEach(function(method) {
+      expect(function() {
+        new RemoteRequest("/url-encoded-data", method)
+          .send("first_name=Bruce&last_name=Wayne");
+      }).not.toThrow(new Error(
+        "`body` can only be an application/x-www-form-urlencoded " +
+          "string with a GET request."
+      ));
+    });
+  });
+
+  it("doesn't throw an error for GET request when body is not provided", function() {
+    mock.get("/url-encoded-data", function(req, res) {
+      return res.status(200);
+    });
+
+    ["get", "GET"].forEach(function(method) {
+      expect(function() {
+        new RemoteRequest("/url-encoded-data", method).send();
+      }).not.toThrow(new Error(
+        "`body` can only be an application/x-www-form-urlencoded " +
+          "string with a GET request."
+      ));
+    });
+  });
+});
