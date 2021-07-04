@@ -108,33 +108,33 @@ describe("constructor()", function() {
 });
 
 describe("send()", function() {
-  it("throws an error for GET request when body is FormData", function() {
-    mock.get("/not-url-encoded-data", function(req, res) {
-      return res.status(200);
-    });
+  describe("when body is not provided", function() {
+    it.each([
+      ["GET"], ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("doesn't throw an error for %s request", function(method) {
+      mock.use(method, "/no-body", function(req, res) {
+        return res.status(200);
+      });
 
-    const formData = new FormData();
-    formData.append("first_name", "Clark");
-    formData.append("last_name", "Kent");
-
-    ["get", "GET"].forEach(function(method) {
       expect(function() {
-        new RemoteRequest("/not-url-encoded-data", method).send(formData);
-      }).toThrow(new Error(
+        new RemoteRequest("/no-body", method).send();
+      }).not.toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
       ));
     });
   });
 
-  it("doesn't throw an error for GET request when body is URL encoded string", function() {
-    mock.get("/url-encoded-data", function(req, res) {
-      return res.status(200);
-    });
+  describe("when body is a string", function() {
+    it.each([
+      ["GET"], ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("doesn't throw an error for %s request", function(method) {
+      mock.use(method, "/string-body", function(req, res) {
+        return res.status(200);
+      });
 
-    ["get", "GET"].forEach(function(method) {
       expect(function() {
-        new RemoteRequest("/url-encoded-data", method)
+        new RemoteRequest("/string-body", method)
           .send("first_name=Bruce&last_name=Wayne");
       }).not.toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
@@ -143,14 +143,37 @@ describe("send()", function() {
     });
   });
 
-  it("doesn't throw an error for GET request when body is not provided", function() {
-    mock.get("/url-encoded-data", function(req, res) {
-      return res.status(200);
+  describe("when body is a FormData", function() {
+    it("throws an error for GET request", function() {
+      mock.get("/form-data", function(req, res) {
+        return res.status(200);
+      });
+
+      const formData = new FormData();
+      formData.append("first_name", "Clark");
+      formData.append("last_name", "Kent");
+
+      expect(function() {
+        new RemoteRequest("/form-data", "GET").send(formData);
+      }).toThrow(new Error(
+        "`body` can only be an application/x-www-form-urlencoded " +
+          "string with a GET request."
+      ));
     });
 
-    ["get", "GET"].forEach(function(method) {
+    it.each([
+      ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("doesn't throw an error for %s request", function(method) {
+      mock.use(method, "/form-data", function(req, res) {
+        return res.status(200);
+      });
+
+      const formData = new FormData();
+      formData.append("first_name", "Clark");
+      formData.append("last_name", "Kent");
+
       expect(function() {
-        new RemoteRequest("/url-encoded-data", method).send();
+        new RemoteRequest("/form-data", method).send(formData);
       }).not.toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
