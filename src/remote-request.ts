@@ -10,6 +10,7 @@ export enum ResponseType {
 export default class RemoteRequest {
   private method: string;
   private url: string;
+  private xhr: XMLHttpRequest;
 
   constructor(url: string, method = "GET") {
     this.method = method.toUpperCase();
@@ -21,26 +22,33 @@ export default class RemoteRequest {
     }
 
     this.url = url;
+    this.xhr = new XMLHttpRequest();
   }
 
-  send(body?: string | FormData, responseType = ResponseType.JSON) {
-    if (this.method == "GET" && body instanceof FormData) {
+  send(body?: RemoteBody, responseType?: ResponseType) {
+    if (this.isBodyIncompatibleWithMethod(body)) {
       throw new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
       );
     }
 
-    const xhr = new XMLHttpRequest();
-    xhr.open(this.method, this.url);
+    this.xhr.open(this.method, this.url);
 
+    this.setRequestHeaders(body, responseType);
+    this.xhr.send(body);
+  }
+
+  private setRequestHeaders(body: RemoteBody, responseType = ResponseType.JSON) {
     if (body && !this.isMethodGet()) {
-      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      this.xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     }
 
-    xhr.setRequestHeader("Accept", responseType);
+    this.xhr.setRequestHeader("Accept", responseType);
+  }
 
-    xhr.send(body);
+  private isBodyIncompatibleWithMethod(body?: RemoteBody) {
+    return this.isMethodGet() && body instanceof FormData;
   }
 
   private isMethodUnsupported() {
@@ -53,3 +61,5 @@ export default class RemoteRequest {
     return this.method == "GET";
   }
 }
+
+type RemoteBody = string | FormData;
