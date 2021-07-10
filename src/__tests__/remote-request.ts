@@ -162,19 +162,36 @@ describe("send()", function() {
       new RemoteRequest(path, method).send(body);
     });
 
-    it("sends the body through URL query parameters for GET request", function() {
-      expect.assertions(1);
+    describe("when no existing query params are present", function() {
+      it("sends the body through URL query params for GET request by prepending ?", function() {
+        expect.assertions(1);
 
-      const body = "first_name=Bruce&last_name=Wayne";
-      const path = "/query-params";
+        const body = "first_name=Bruce&last_name=Wayne";
+        const path = "/query-params";
 
-      mock.get(`${path}?${body}`, function(req, res) {
-        expect(req.url().query).toEqual({ first_name: "Bruce", last_name: "Wayne" });
+        mock.get(`${path}?${body}`, function(req, res) {
+          expect(req.url().query).toEqual({ first_name: "Bruce", last_name: "Wayne" });
 
-        return res.status(200);
+          return res.status(200);
+        });
+
+        new RemoteRequest(path).send(body);
       });
 
-      new RemoteRequest(path).send(body);
+      it("sends the body through URL query params for GET request by prepending &", function() {
+        expect.assertions(1);
+
+        const body = "first_name=Bruce&last_name=Wayne";
+        const path = "/query-params?address=Gotham";
+
+        mock.get(`${path}&${body}`, function(req, res) {
+          expect(req.url().query).toEqual({ address: "Gotham", first_name: "Bruce", last_name: "Wayne" });
+
+          return res.status(200);
+        });
+
+        new RemoteRequest(path).send(body);
+      });
     });
 
     it.each([

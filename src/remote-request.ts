@@ -41,7 +41,12 @@ export default class RemoteRequest {
 
   private processedUrl(body: RemoteBody): string {
     if (body && typeof body == "string" && this.isMethodGet()) {
-      return this.url + "?" + body;
+      let separator = "&";
+      if (this.url.indexOf("?") < 0) {
+        separator = "?";
+      }
+
+      return this.url + separator + body;
     }
 
     return this.url;
