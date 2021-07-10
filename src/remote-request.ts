@@ -33,10 +33,18 @@ export default class RemoteRequest {
       );
     }
 
-    this.xhr.open(this.method, this.url);
+    this.xhr.open(this.method, this.processedUrl(body));
 
     this.setRequestHeaders(body, responseType);
     this.xhr.send(body);
+  }
+
+  private processedUrl(body: RemoteBody): string {
+    if (body && typeof body == "string" && this.isMethodGet()) {
+      return this.url + "?" + body;
+    }
+
+    return this.url;
   }
 
   private setRequestHeaders(body: RemoteBody, responseType = ResponseType.JSON) {

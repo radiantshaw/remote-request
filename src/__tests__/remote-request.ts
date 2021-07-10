@@ -18,13 +18,15 @@ describe("constructor()", function() {
   it("sets up a GET request by default", function() {
     expect.assertions(1);
 
-    mock.get("/get", function(req, res) {
+    const path = "/get";
+
+    mock.get(path, function(req, res) {
       expect(req.method()).toEqual("GET");
 
       return res.status(200);
     });
 
-    new RemoteRequest("/get").send();
+    new RemoteRequest(path).send();
   });
 
   it.each([
@@ -34,7 +36,8 @@ describe("constructor()", function() {
   ])("can setup a %s|%s request", function(lowercased, uppercased) {
     expect.assertions(2);
 
-    const path = "/" + lowercased;
+    const path = `/${lowercased}`;
+
     mock.use(lowercased, path, function(req, res) {
       expect(req.method()).toEqual(uppercased);
 
@@ -48,7 +51,7 @@ describe("constructor()", function() {
 
   it("throws an error when the method is unsupported", function() {
     expect(function() {
-      new RemoteRequest("/method", "UNSUPPORTED")
+      new RemoteRequest("/unsupported", "UNSUPPORTED")
     }).toThrow(new Error(
       "`method` unsupported. " +
         "Supported methods: GET|POST|PUT|PATCH|DELETE (case insensitively)."
@@ -61,12 +64,14 @@ describe("send()", function() {
     it.each([
       ["GET"], ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
     ])("doesn't throw an error for %s request", function(method) {
-      mock.use(method, "/no-body", function(req, res) {
+      const path = "/no-body";
+
+      mock.use(method, path, function(req, res) {
         return res.status(200);
       });
 
       expect(function() {
-        new RemoteRequest("/no-body", method).send();
+        new RemoteRequest(path, method).send();
       }).not.toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
@@ -78,27 +83,47 @@ describe("send()", function() {
     ])("doesn't set Content-Type for %s request", function(method) {
       expect.assertions(1)
 
-      mock.use(method, "/unset-content-type", function(req, res) {
+      const path = "/unset-content-type";
+
+      mock.use(method, path, function(req, res) {
         expect(req.header("Content-Type")).toBeNull();
 
         return res.status(200);
       });
 
-      new RemoteRequest("/unset-content-type", method).send();
+      new RemoteRequest(path, method).send();
     });
   });
 
   describe("when body is a string", function() {
-    it.each([
-      ["GET"], ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
-    ])("doesn't throw an error for %s request", function(method) {
-      mock.use(method, "/string-body", function(req, res) {
+    it("doesn't throw an error for GET request", function() {
+      const body = "first_name=Bruce&last_name=Wayne";
+      const path = "/string-body";
+
+      mock.get(`${path}?${body}`, function(req, res) {
         return res.status(200);
       });
 
       expect(function() {
-        new RemoteRequest("/string-body", method)
-          .send("first_name=Bruce&last_name=Wayne");
+        new RemoteRequest(path).send(body);
+      }).not.toThrow(new Error(
+        "`body` can only be an application/x-www-form-urlencoded " +
+          "string with a GET request."
+      ));
+    });
+
+    it.each([
+      ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("doesn't throw an error for %s request", function(method) {
+      const body = "first_name=Bruce&last_name=Wayne";
+      const path = "/string-body";
+
+      mock.use(method, path, function(req, res) {
+        return res.status(200);
+      });
+
+      expect(function() {
+        new RemoteRequest(path, method).send(body);
       }).not.toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
@@ -108,14 +133,16 @@ describe("send()", function() {
     it("doesn't set Content-Type for GET request", function() {
       expect.assertions(1)
 
-      mock.get("/unset-content-type", function(req, res) {
+      const body = "first_name=Diana&last_name=Prince";
+      const path = "/unset-content-type";
+
+      mock.get(`${path}?${body}`, function(req, res) {
         expect(req.header("Content-Type")).toBeNull();
 
         return res.status(200);
       });
 
-      new RemoteRequest("/unset-content-type", "GET")
-        .send("first_name=Diana&last_name=Prince");
+      new RemoteRequest(path, "GET").send(body);
     });
 
     it.each([
@@ -123,29 +150,64 @@ describe("send()", function() {
     ])("sets Content-Type: application/x-www-form-urlencoded for %s request", function(method) {
       expect.assertions(1)
 
-      mock.use(method, "/urlencoded-content-type", function(req, res) {
+      const body = "first_name=Diana&last_name=Prince";
+      const path = "/urlencoded-content-type";
+
+      mock.use(method, path, function(req, res) {
         expect(req.header("Content-Type")).toEqual("application/x-www-form-urlencoded");
 
         return res.status(200);
       });
 
-      new RemoteRequest("/urlencoded-content-type", method)
-        .send("first_name=Diana&last_name=Prince");
+      new RemoteRequest(path, method).send(body);
+    });
+
+    it("sends the body through URL query parameters for GET request", function() {
+      expect.assertions(1);
+
+      const body = "first_name=Bruce&last_name=Wayne";
+      const path = "/query-params";
+
+      mock.get(`${path}?${body}`, function(req, res) {
+        expect(req.url().query).toEqual({ first_name: "Bruce", last_name: "Wayne" });
+
+        return res.status(200);
+      });
+
+      new RemoteRequest(path).send(body);
+    });
+
+    it.each([
+      ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("sends the body as a request body for %s request", function(method) {
+      expect.assertions(1);
+
+      const body = "first_name=Bruce&last_name=Wayne";
+      const path = "/request-body";
+
+      mock.use(method, path, function(req, res) {
+        expect(req.body()).toEqual(body);
+
+        return res.status(200);
+      });
+
+      new RemoteRequest(path, method).send(body);
     });
   });
 
   describe("when body is a FormData", function() {
     it("throws an error for GET request", function() {
-      mock.get("/form-data", function(req, res) {
+      const path = "/form-data";
+      const body = new FormData();
+      body.append("first_name", "Clark");
+      body.append("last_name", "Kent");
+
+      mock.get(path, function(req, res) {
         return res.status(200);
       });
 
-      const formData = new FormData();
-      formData.append("first_name", "Clark");
-      formData.append("last_name", "Kent");
-
       expect(function() {
-        new RemoteRequest("/form-data", "GET").send(formData);
+        new RemoteRequest(path, "GET").send(body);
       }).toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
@@ -155,16 +217,17 @@ describe("send()", function() {
     it.each([
       ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
     ])("doesn't throw an error for %s request", function(method) {
-      mock.use(method, "/form-data", function(req, res) {
+      const path = "/form-data";
+      const body = new FormData();
+      body.append("first_name", "Clark");
+      body.append("last_name", "Kent");
+
+      mock.use(method, path, function(req, res) {
         return res.status(200);
       });
 
-      const formData = new FormData();
-      formData.append("first_name", "Clark");
-      formData.append("last_name", "Kent");
-
       expect(function() {
-        new RemoteRequest("/form-data", method).send(formData);
+        new RemoteRequest(path, method).send(body);
       }).not.toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
@@ -174,20 +237,40 @@ describe("send()", function() {
     it.each([
       ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
     ])("sets Content-Type: multipart/form-data for %s request", function(method) {
-      mock.use(method, "/content-type-form-data", function(req, res) {
+      const path = "/content-type-form-data";
+      const body = new FormData();
+      body.append("first_name", "Clark");
+      body.append("last_name", "Kent");
+
+      mock.use(method, path, function(req, res) {
         return res.status(200);
       });
 
-      const formData = new FormData();
-      formData.append("first_name", "Clark");
-      formData.append("last_name", "Kent");
-
       expect(function() {
-        new RemoteRequest("/content-type-form-data", method).send(formData);
+        new RemoteRequest(path, method).send(body);
       }).not.toThrow(new Error(
         "`body` can only be an application/x-www-form-urlencoded " +
           "string with a GET request."
       ));
+    });
+
+    it.each([
+      ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+    ])("sends the body as a request body for %s request", function(method) {
+      expect.assertions(1);
+
+      const path = "/request-body";
+      const body = new FormData();
+      body.append("first_name", "Clark");
+      body.append("last_name", "Kent");
+
+      mock.use(method, path, function(req, res) {
+        expect(req.body()).toEqual(body);
+
+        return res.status(200);
+      });
+
+      new RemoteRequest(path, method).send(body);
     });
   });
 
@@ -195,13 +278,15 @@ describe("send()", function() {
     it("sets Accept: application/json, text/javascript by default", function() {
       expect.assertions(1);
 
-      mock.get("/default-response-type", function(req, res) {
+      const path = "/default-response-type";
+
+      mock.get(path, function(req, res) {
         expect(req.header("Accept")).toEqual("application/json, text/javascript");
 
         return res.status(200);
       });
 
-      new RemoteRequest("/default-response-type").send();
+      new RemoteRequest(path).send();
     });
   });
 
@@ -219,13 +304,15 @@ describe("send()", function() {
     it("sets Accept: " + accept, function() {
       expect.assertions(1);
 
-      mock.get("/custom-response-type", function(req, res) {
+      const path = "/custom-response-type";
+
+      mock.get(path, function(req, res) {
         expect(req.header("Accept")).toEqual(accept);
 
         return res.status(200);
       });
 
-      new RemoteRequest("/custom-response-type").send(null, responseType);
+      new RemoteRequest(path).send(null, responseType);
     });
   });
 });
