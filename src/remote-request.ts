@@ -11,6 +11,8 @@ export default class RemoteRequest {
   private method: string;
   private url: string;
   private xhr: XMLHttpRequest;
+  private username?: string;
+  private password?: string;
 
   constructor(url: string, method = "GET") {
     this.method = method.toUpperCase();
@@ -25,6 +27,11 @@ export default class RemoteRequest {
     this.xhr = new XMLHttpRequest();
   }
 
+  authorizeWith(username: string, password: string) {
+    this.username = username;
+    this.password = password;
+  }
+
   send(body?: RemoteBody, responseType?: ResponseType) {
     if (this.isBodyIncompatibleWithMethod(body)) {
       throw new Error(
@@ -33,7 +40,11 @@ export default class RemoteRequest {
       );
     }
 
-    this.xhr.open(this.method, this.processedUrl(body));
+    if (this.username && this.password) {
+      this.xhr.open(this.method, this.processedUrl(body), true, this.username, this.password);
+    } else {
+      this.xhr.open(this.method, this.processedUrl(body));
+    }
 
     this.setRequestHeaders(body, responseType);
     this.xhr.send(body);

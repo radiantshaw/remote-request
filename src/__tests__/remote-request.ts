@@ -333,3 +333,21 @@ describe("send()", function() {
     });
   });
 });
+
+describe("authorizeWith()", function() {
+  it.each([
+    ["GET"], ["POST"], ["PUT"], ["PATCH"], ["DELETE"]
+  ])("is invoked to send HTTP authenticated %s request", function(method) {
+    expect.assertions(1);
+
+    mock.use(method, "http://username:password@example.com/", function(req, res) {
+      expect(req.method()).toBe(method);
+
+      return res.status(200);
+    });
+
+    const remoteRequest = new RemoteRequest("http://example.com", method);
+    remoteRequest.authorizeWith("username", "password");
+    remoteRequest.send();
+  });
+});
