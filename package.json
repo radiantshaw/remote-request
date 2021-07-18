@@ -16,6 +16,7 @@
     "@types/jest": "^26.0.23",
     "jest": "^27.0.5",
     "ts-jest": "^27.0.3",
-    "typescript": "^4.3.4"
+    "typescript": "^4.3.4",
+    "xhr-mock": "^2.5.1"
   }
 }
