@@ -14,6 +14,8 @@ export default class RemoteRequest {
   private username?: string;
   private password?: string;
 
+  withCredentials = false;
+
   constructor(url: string, method = "GET") {
     this.method = method.toUpperCase();
     if (this.isMethodUnsupported()) {
@@ -45,6 +47,8 @@ export default class RemoteRequest {
     } else {
       this.xhr.open(this.method, this.processedUrl(body));
     }
+
+    this.xhr.withCredentials = this.withCredentials;
 
     this.setRequestHeaders(body, responseType);
     this.xhr.send(body);
