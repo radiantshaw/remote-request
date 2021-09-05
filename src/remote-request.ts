@@ -14,6 +14,8 @@ export default class RemoteRequest {
   private username?: string;
   private password?: string;
 
+  private callbacks: object;
+
   withCredentials = false;
 
   constructor(url: string, method = "GET") {
@@ -27,6 +29,7 @@ export default class RemoteRequest {
 
     this.url = url;
     this.xhr = new XMLHttpRequest();
+    this.callbacks = {};
   }
 
   authorizeWith(username: string, password: string) {
@@ -42,6 +45,8 @@ export default class RemoteRequest {
       );
     }
 
+    if (this.shouldCancelPrematurely()) { return }
+
     if (this.username && this.password) {
       this.xhr.open(this.method, this.processedUrl(body), true, this.username, this.password);
     } else {
@@ -52,6 +57,10 @@ export default class RemoteRequest {
 
     this.setRequestHeaders(body, responseType);
     this.xhr.send(body);
+  }
+
+  onStart(callback: () => void | boolean) {
+    this.callbacks["start"] = callback;
   }
 
   private processedUrl(body: RemoteBody): string {
@@ -75,6 +84,11 @@ export default class RemoteRequest {
     this.xhr.setRequestHeader("Accept", responseType);
   }
 
+  private shouldCancelPrematurely() {
+    const returnValue = this.safelyCallback("start");
+    return returnValue === false;
+  }
+
   private isBodyIncompatibleWithMethod(body?: RemoteBody) {
     return this.isMethodGet() && body instanceof FormData;
   }
@@ -87,6 +101,10 @@ export default class RemoteRequest {
 
   private isMethodGet() {
     return this.method == "GET";
+  }
+
+  private safelyCallback(name: string): void | boolean {
+    return this.callbacks[name] && this.callbacks[name]();
   }
 }
 

@@ -351,3 +351,67 @@ describe("authorizeWith()", function() {
     remoteRequest.send();
   });
 });
+
+describe("onStart() callback", function() {
+  it("doesn't cancel prematurely upon returning nothing", async function() {
+    const startCallback = jest.fn();
+
+    const mockRequest = jest.fn();
+    await new Promise(function(resolve) {
+      mockRequest.mockImplementation(function(_, res) {
+        resolve(true);
+
+        return res.status(200);
+      });
+
+      mock.get("/", mockRequest);
+
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onStart(startCallback);
+      remoteRequest.send();
+    });
+
+    expect(startCallback).toHaveBeenCalled();
+    expect(mockRequest).toHaveBeenCalled();
+  });
+
+  it("doesn't cancel prematurely upon returning true", async function() {
+    const startCallback = jest.fn().mockReturnValue(true);
+
+    const mockRequest = jest.fn();
+    await new Promise(function(resolve) {
+      mockRequest.mockImplementation(function(_, res) {
+        resolve(true);
+
+        return res.status(200);
+      });
+
+      mock.get("/", mockRequest);
+
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onStart(startCallback);
+      remoteRequest.send();
+    });
+
+    expect(mockRequest).toHaveBeenCalled();
+    expect(startCallback).toHaveBeenCalled();
+  });
+
+  it("cancels prematurely upon returning false", function() {
+    const startCallback = jest.fn().mockReturnValue(false);
+
+    const mockRequest = jest.fn();
+    mock.get("/", function(_, res) {
+      mockRequest();
+
+      return res.status(200);
+    });
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onStart(startCallback);
+    remoteRequest.send();
+
+    expect(startCallback).toHaveBeenCalled();
+    expect(mockRequest).not.toHaveBeenCalled();
+  });
+});
