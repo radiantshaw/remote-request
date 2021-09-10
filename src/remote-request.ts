@@ -45,7 +45,11 @@ export default class RemoteRequest {
       );
     }
 
-    if (this.shouldCancelPrematurely()) { return }
+    if (this.shouldCancelPrematurely() || this.shouldCancelNormally()) {
+      this.safelyCallback("stop");
+
+      return;
+    }
 
     if (this.username && this.password) {
       this.xhr.open(this.method, this.processedUrl(body), true, this.username, this.password);
@@ -61,6 +65,14 @@ export default class RemoteRequest {
 
   onStart(callback: () => void | boolean) {
     this.callbacks["start"] = callback;
+  }
+
+  onStop(callback: () => void) {
+    this.callbacks["stop"] = callback;
+  }
+
+  onSending(callback: () => boolean) {
+    this.callbacks["sending"] = callback;
   }
 
   private processedUrl(body: RemoteBody): string {
@@ -87,6 +99,11 @@ export default class RemoteRequest {
   private shouldCancelPrematurely() {
     const returnValue = this.safelyCallback("start");
     return returnValue === false;
+  }
+
+  private shouldCancelNormally() {
+    const returnValue = this.safelyCallback("sending");
+    return returnValue == false;
   }
 
   private isBodyIncompatibleWithMethod(body?: RemoteBody) {

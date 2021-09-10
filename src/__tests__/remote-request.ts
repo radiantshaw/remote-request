@@ -415,3 +415,45 @@ describe("onStart() callback", function() {
     expect(mockRequest).not.toHaveBeenCalled();
   });
 });
+
+describe("onStop() callback", function() {
+  it("gets called immediately after onStart() for premature cancellation", function() {
+    expect.assertions(2);
+
+    const startCallback = jest.fn(function() {
+      expect(stopCallback).not.toHaveBeenCalled();
+
+      return false;
+    });
+    const stopCallback = jest.fn();
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onStart(startCallback);
+    remoteRequest.onStop(stopCallback);
+    remoteRequest.send();
+
+    expect(stopCallback).toHaveBeenCalled();
+  });
+
+  it("gets called immediately after onSending() for normal cancellation", function() {
+    expect.assertions(3);
+
+    const startCallback = jest.fn(function() {
+      expect(stopCallback).not.toHaveBeenCalled();
+    });
+    const sendingCallback = jest.fn(function() {
+      expect(stopCallback).not.toHaveBeenCalled();
+
+      return false;
+    });
+    const stopCallback = jest.fn();
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onStart(startCallback);
+    remoteRequest.onStop(stopCallback);
+    remoteRequest.onSending(sendingCallback);
+    remoteRequest.send();
+
+    expect(stopCallback).toHaveBeenCalled();
+  });
+});
