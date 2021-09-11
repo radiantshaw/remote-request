@@ -457,3 +457,103 @@ describe("onStop() callback", function() {
     expect(stopCallback).toHaveBeenCalled();
   });
 });
+
+describe("onSending() callback", function() {
+  it("doesn't cancel normally upon returning nothing", async function() {
+    const sendingCallback = jest.fn();
+
+    const mockRequest = jest.fn();
+    await new Promise(function(resolve) {
+      mockRequest.mockImplementation(function(_, res) {
+        resolve(true);
+
+        return res.status(200);
+      });
+
+      mock.get("/", mockRequest);
+
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onSending(sendingCallback);
+      remoteRequest.send();
+    });
+
+    expect(sendingCallback).toHaveBeenCalled();
+    expect(mockRequest).toHaveBeenCalled();
+  });
+
+  it("doesn't cancel normally upon returning true", async function() {
+    const sendingCallback = jest.fn().mockReturnValue(true);
+
+    const mockRequest = jest.fn();
+    await new Promise(function(resolve) {
+      mockRequest.mockImplementation(function(_, res) {
+        resolve(true);
+
+        return res.status(200);
+      });
+
+      mock.get("/", mockRequest);
+
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onSending(sendingCallback);
+      remoteRequest.send();
+    });
+
+    expect(mockRequest).toHaveBeenCalled();
+    expect(sendingCallback).toHaveBeenCalled();
+  });
+
+  it("cancels normally upon returning false", function() {
+    const sendingCallback = jest.fn().mockReturnValue(false);
+
+    const mockRequest = jest.fn();
+    mock.get("/", function(_, res) {
+      mockRequest();
+
+      return res.status(200);
+    });
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onSending(sendingCallback);
+    remoteRequest.send();
+
+    expect(sendingCallback).toHaveBeenCalled();
+    expect(mockRequest).not.toHaveBeenCalled();
+  });
+
+  it("does not get called for premature cancellation", function() {
+    expect.assertions(2);
+
+    const startCallback = jest.fn(function() {
+      expect(sendingCallback).not.toHaveBeenCalled();
+
+      return false;
+    });
+    const sendingCallback = jest.fn();
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onStart(startCallback);
+    remoteRequest.onSending(sendingCallback);
+    remoteRequest.send();
+
+    expect(sendingCallback).not.toHaveBeenCalled();
+  });
+
+  it("gets called immediately after onStart() for normal cancellation", function() {
+    expect.assertions(2);
+
+    const startCallback = jest.fn(function() {
+      expect(sendingCallback).not.toHaveBeenCalled();
+    });
+    const sendingCallback = jest.fn();
+
+    mock.get("/", { status: 200 });
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onStart(startCallback);
+    remoteRequest.onSending(sendingCallback);
+    remoteRequest.send();
+
+    expect(sendingCallback).toHaveBeenCalled();
+  });
+});
