@@ -701,7 +701,6 @@ describe("onSuccess() callback", function() {
       const remoteRequest = new RemoteRequest("/");
       remoteRequest.onSuccess(successCallback);
       remoteRequest.onFinish(finishCallback);
-      remoteRequest.timeout = 100;
       remoteRequest.send();
     });
 
