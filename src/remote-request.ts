@@ -55,6 +55,22 @@ export default class RemoteRequest {
       return;
     }
 
+    this.addEventListener("timeout", function() {
+      this.safelyCallback("finish");
+    });
+
+    this.addEventListener("error", function() {
+      this.safelyCallback("finish");
+    });
+
+    this.addEventListener("load", function() {
+      if (Math.floor(this.xhr.status / 100) == 2) {
+        this.safelyCallback("success");
+      }
+
+      this.safelyCallback("finish");
+    });
+
     if (this.username && this.password) {
       this.xhr.open(this.method, this.processedUrl(body), true, this.username, this.password);
     } else {
@@ -83,6 +99,14 @@ export default class RemoteRequest {
 
   onSend(callback: () => void) {
     this.callbacks["send"] = callback;
+  }
+
+  onSuccess(callback: () => void) {
+    this.callbacks["success"] = callback;
+  }
+
+  onFinish(callback: () => void) {
+    this.callbacks["finish"] = callback;
   }
 
   private processedUrl(body: RemoteBody): string {
@@ -132,6 +156,10 @@ export default class RemoteRequest {
 
   private safelyCallback(name: string): void | boolean {
     return this.callbacks[name] && this.callbacks[name]();
+  }
+
+  private addEventListener(name: string, callback: () => void): void {
+    this.xhr.addEventListener(name, callback.bind(this));
   }
 }
 
