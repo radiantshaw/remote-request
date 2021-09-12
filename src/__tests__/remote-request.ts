@@ -824,7 +824,6 @@ describe("onComplete() callback", function() {
     });
 
     expect(completeCallback).toHaveBeenCalled();
-
   });
 
   it("does not get called for timeout", async function() {
