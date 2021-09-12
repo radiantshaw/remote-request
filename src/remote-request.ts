@@ -56,10 +56,12 @@ export default class RemoteRequest {
     }
 
     this.addEventListener("timeout", function() {
+      this.safelyCallback("timeout");
       this.safelyCallback("finish");
     });
 
     this.addEventListener("error", function() {
+      this.safelyCallback("error");
       this.safelyCallback("finish");
     });
 
@@ -114,6 +116,14 @@ export default class RemoteRequest {
 
   onComplete(callback: () => void) {
     this.callbacks["complete"] = callback;
+  }
+
+  onTimeout(callback: () => void) {
+    this.callbacks["timeout"] = callback;
+  }
+
+  onError(callback: () => void) {
+    this.callbacks["error"] = callback;
   }
 
   onFinish(callback: () => void) {

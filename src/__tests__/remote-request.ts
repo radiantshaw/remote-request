@@ -862,3 +862,90 @@ describe("onComplete() callback", function() {
     expect(completeCallback).not.toHaveBeenCalled();
   });
 });
+
+describe("onFinish() callback", function() {
+  it("gets called immediately after onComplete() for success", async function() {
+    expect.assertions(2);
+
+    mock.get("/", { status: 200 });
+
+    const completeCallback = jest.fn(function() {
+      expect(finishCallback).not.toHaveBeenCalled();
+    });
+    const finishCallback = jest.fn();
+    await new Promise(function(resolve) {
+      finishCallback.mockImplementation(resolve);
+
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onComplete(completeCallback);
+      remoteRequest.onFinish(finishCallback);
+      remoteRequest.send();
+    });
+
+    expect(finishCallback).toHaveBeenCalled();
+  });
+
+  it("gets called immediately after onComplete() for failure", async function() {
+    expect.assertions(2);
+
+    mock.get("/", { status: 400 });
+
+    const completeCallback = jest.fn(function() {
+      expect(finishCallback).not.toHaveBeenCalled();
+    });
+    const finishCallback = jest.fn();
+    await new Promise(function(resolve) {
+      finishCallback.mockImplementation(resolve);
+
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onComplete(completeCallback);
+      remoteRequest.onFinish(finishCallback);
+      remoteRequest.send();
+    });
+
+    expect(finishCallback).toHaveBeenCalled();
+  });
+
+  it("gets called immediately after onTimeout() for timeout", async function() {
+    expect.assertions(2);
+
+    mock.get("/", () => new Promise(() => {}));
+
+    const timeoutCallback = jest.fn(function() {
+      expect(finishCallback).not.toHaveBeenCalled();
+    });
+    const finishCallback = jest.fn();
+    await new Promise(function(resolve) {
+      finishCallback.mockImplementation(resolve);
+
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onTimeout(timeoutCallback);
+      remoteRequest.onFinish(finishCallback);
+      remoteRequest.timeout = 100;
+      remoteRequest.send();
+    });
+
+    expect(finishCallback).toHaveBeenCalled();
+  });
+
+  it("gets called immediately after onError() for error", async function() {
+    expect.assertions(2);
+
+    mock.get("/", () => Promise.reject(new Error()));
+
+    const errorCallback = jest.fn(function() {
+      expect(finishCallback).not.toHaveBeenCalled();
+    });
+    const finishCallback = jest.fn();
+    await new Promise(function(resolve) {
+      finishCallback.mockImplementation(resolve);
+
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onError(errorCallback);
+      remoteRequest.onFinish(finishCallback);
+      remoteRequest.send();
+    });
+
+    expect(finishCallback).toHaveBeenCalled();
+  });
+});
