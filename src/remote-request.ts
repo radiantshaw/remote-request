@@ -37,6 +37,10 @@ export default class RemoteRequest {
     this.password = password;
   }
 
+  set timeout(milliseconds: number) {
+    this.xhr.timeout = milliseconds;
+  }
+
   send(body?: RemoteBody, responseType?: ResponseType) {
     if (this.isBodyIncompatibleWithMethod(body)) {
       throw new Error(
@@ -61,6 +65,8 @@ export default class RemoteRequest {
 
     this.setRequestHeaders(body, responseType);
     this.xhr.send(body);
+
+    this.safelyCallback("send");
   }
 
   onStart(callback: () => void | boolean) {
@@ -71,8 +77,12 @@ export default class RemoteRequest {
     this.callbacks["stop"] = callback;
   }
 
-  onSending(callback: () => boolean) {
+  onSending(callback: () => void | boolean) {
     this.callbacks["sending"] = callback;
+  }
+
+  onSend(callback: () => void) {
+    this.callbacks["send"] = callback;
   }
 
   private processedUrl(body: RemoteBody): string {

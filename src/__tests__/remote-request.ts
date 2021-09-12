@@ -557,3 +557,78 @@ describe("onSending() callback", function() {
     expect(sendingCallback).toHaveBeenCalled();
   });
 });
+
+describe("onSend() callback", function() {
+  it("gets called immediately after onSending() for success", function() {
+    expect.assertions(2);
+
+    const sendingCallback = jest.fn(function() {
+      expect(sendCallback).not.toHaveBeenCalled();
+    });
+    const sendCallback = jest.fn();
+
+    mock.get("/", { status: 200 });
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onSending(sendingCallback);
+    remoteRequest.onSend(sendCallback);
+    remoteRequest.send();
+
+    expect(sendCallback).toHaveBeenCalled();
+  });
+
+  it("gets called immediately after onSending() for failure", function() {
+    expect.assertions(2);
+
+    const sendingCallback = jest.fn(function() {
+      expect(sendCallback).not.toHaveBeenCalled();
+    });
+    const sendCallback = jest.fn();
+
+    mock.get("/", { status: 400 });
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onSending(sendingCallback);
+    remoteRequest.onSend(sendCallback);
+    remoteRequest.send();
+
+    expect(sendCallback).toHaveBeenCalled();
+  });
+
+  it("gets called immediately after onSending() for timeout", function() {
+    expect.assertions(2);
+
+    const sendingCallback = jest.fn(function() {
+      expect(sendCallback).not.toHaveBeenCalled();
+    });
+    const sendCallback = jest.fn();
+
+    mock.get("/", () => new Promise(() => {}));
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onSending(sendingCallback);
+    remoteRequest.onSend(sendCallback);
+    remoteRequest.timeout = 100;
+    remoteRequest.send();
+
+    expect(sendCallback).toHaveBeenCalled();
+  });
+
+  it("gets called immediately after onSending() for error", function() {
+    expect.assertions(2);
+
+    const sendingCallback = jest.fn(function() {
+      expect(sendCallback).not.toHaveBeenCalled();
+    });
+    const sendCallback = jest.fn();
+
+    mock.get("/", () => Promise.reject(new Error()));
+
+    const remoteRequest = new RemoteRequest("/");
+    remoteRequest.onSending(sendingCallback);
+    remoteRequest.onSend(sendCallback);
+    remoteRequest.send();
+
+    expect(sendCallback).toHaveBeenCalled();
+  });
+});
