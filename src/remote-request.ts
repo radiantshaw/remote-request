@@ -66,6 +66,8 @@ export default class RemoteRequest {
     this.addEventListener("load", function() {
       if (Math.floor(this.xhr.status / 100) == 2) {
         this.safelyCallback("success");
+      } else {
+        this.safelyCallback("failure");
       }
 
       this.safelyCallback("finish");
@@ -103,6 +105,10 @@ export default class RemoteRequest {
 
   onSuccess(callback: () => void) {
     this.callbacks["success"] = callback;
+  }
+
+  onFailure(callback: () => void) {
+    this.callbacks["failure"] = callback;
   }
 
   onFinish(callback: () => void) {
