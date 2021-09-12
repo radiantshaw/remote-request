@@ -70,6 +70,7 @@ export default class RemoteRequest {
         this.safelyCallback("failure");
       }
 
+      this.safelyCallback("complete");
       this.safelyCallback("finish");
     });
 
@@ -109,6 +110,10 @@ export default class RemoteRequest {
 
   onFailure(callback: () => void) {
     this.callbacks["failure"] = callback;
+  }
+
+  onComplete(callback: () => void) {
+    this.callbacks["complete"] = callback;
   }
 
   onFinish(callback: () => void) {
