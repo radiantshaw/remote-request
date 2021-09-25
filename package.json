@@ -4,7 +4,8 @@
   "description": "Utility object for making a remote request the Rails UJS way.",
   "main": "index.js",
   "scripts": {
-    "test": "jest --watchAll"
+    "test": "jest --watchAll",
+    "build": "tsc"
   },
   "keywords": [
     "remote",
