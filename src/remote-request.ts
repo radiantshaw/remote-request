@@ -14,6 +14,8 @@ export default class RemoteRequest {
   private username?: string;
   private password?: string;
 
+  private callbacks: object;
+
   withCredentials = false;
 
   constructor(url: string, method = "GET") {
@@ -27,11 +29,16 @@ export default class RemoteRequest {
 
     this.url = url;
     this.xhr = new XMLHttpRequest();
+    this.callbacks = {};
   }
 
   authorizeWith(username: string, password: string) {
     this.username = username;
     this.password = password;
+  }
+
+  set timeout(milliseconds: number) {
+    this.xhr.timeout = milliseconds;
   }
 
   send(body?: RemoteBody, responseType?: ResponseType) {
@@ -41,6 +48,33 @@ export default class RemoteRequest {
           "string with a GET request."
       );
     }
+
+    if (this.shouldCancelPrematurely() || this.shouldCancelNormally()) {
+      this.safelyCallback("stop");
+
+      return;
+    }
+
+    this.addEventListener("timeout", function() {
+      this.safelyCallback("timeout");
+      this.safelyCallback("finish");
+    });
+
+    this.addEventListener("error", function() {
+      this.safelyCallback("error");
+      this.safelyCallback("finish");
+    });
+
+    this.addEventListener("load", function() {
+      if (Math.floor(this.xhr.status / 100) == 2) {
+        this.safelyCallback("success");
+      } else {
+        this.safelyCallback("failure");
+      }
+
+      this.safelyCallback("complete");
+      this.safelyCallback("finish");
+    });
 
     if (this.username && this.password) {
       this.xhr.open(this.method, this.processedUrl(body), true, this.username, this.password);
@@ -52,6 +86,48 @@ export default class RemoteRequest {
 
     this.setRequestHeaders(body, responseType);
     this.xhr.send(body);
+
+    this.safelyCallback("send");
+  }
+
+  onStart(callback: () => void | boolean) {
+    this.callbacks["start"] = callback;
+  }
+
+  onStop(callback: () => void) {
+    this.callbacks["stop"] = callback;
+  }
+
+  onSending(callback: () => void | boolean) {
+    this.callbacks["sending"] = callback;
+  }
+
+  onSend(callback: () => void) {
+    this.callbacks["send"] = callback;
+  }
+
+  onSuccess(callback: () => void) {
+    this.callbacks["success"] = callback;
+  }
+
+  onFailure(callback: () => void) {
+    this.callbacks["failure"] = callback;
+  }
+
+  onComplete(callback: () => void) {
+    this.callbacks["complete"] = callback;
+  }
+
+  onTimeout(callback: () => void) {
+    this.callbacks["timeout"] = callback;
+  }
+
+  onError(callback: () => void) {
+    this.callbacks["error"] = callback;
+  }
+
+  onFinish(callback: () => void) {
+    this.callbacks["finish"] = callback;
   }
 
   private processedUrl(body: RemoteBody): string {
@@ -75,6 +151,16 @@ export default class RemoteRequest {
     this.xhr.setRequestHeader("Accept", responseType);
   }
 
+  private shouldCancelPrematurely() {
+    const returnValue = this.safelyCallback("start");
+    return returnValue === false;
+  }
+
+  private shouldCancelNormally() {
+    const returnValue = this.safelyCallback("sending");
+    return returnValue == false;
+  }
+
   private isBodyIncompatibleWithMethod(body?: RemoteBody) {
     return this.isMethodGet() && body instanceof FormData;
   }
@@ -87,6 +173,14 @@ export default class RemoteRequest {
 
   private isMethodGet() {
     return this.method == "GET";
+  }
+
+  private safelyCallback(name: string): void | boolean {
+    return this.callbacks[name] && this.callbacks[name]();
+  }
+
+  private addEventListener(name: string, callback: () => void): void {
+    this.xhr.addEventListener(name, callback.bind(this));
   }
 }
 
