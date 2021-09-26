@@ -67,7 +67,7 @@ export default class RemoteRequest {
 
     this.addEventListener("load", function() {
       if (Math.floor(this.xhr.status / 100) == 2) {
-        this.safelyCallback("success");
+        this.safelyCallback("success", { status: this.xhr.status });
       } else {
         this.safelyCallback("failure");
       }
@@ -106,7 +106,7 @@ export default class RemoteRequest {
     this.callbacks["send"] = callback;
   }
 
-  onSuccess(callback: () => void) {
+  onSuccess(callback: (remoteResponse: RemoteResponse) => void) {
     this.callbacks["success"] = callback;
   }
 
@@ -175,8 +175,8 @@ export default class RemoteRequest {
     return this.method == "GET";
   }
 
-  private safelyCallback(name: string): void | boolean {
-    return this.callbacks[name] && this.callbacks[name]();
+  private safelyCallback(name: string, ...args: any[]): void | boolean {
+    return this.callbacks[name] && this.callbacks[name](...args);
   }
 
   private addEventListener(name: string, callback: () => void): void {
@@ -185,3 +185,7 @@ export default class RemoteRequest {
 }
 
 type RemoteBody = string | FormData;
+
+interface RemoteResponse {
+  status: number;
+}
