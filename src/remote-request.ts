@@ -67,7 +67,10 @@ export default class RemoteRequest {
 
     this.addEventListener("load", function() {
       if (Math.floor(this.xhr.status / 100) == 2) {
-        this.safelyCallback("success", { status: this.xhr.status });
+        this.safelyCallback("success", {
+          status: this.xhr.status,
+          reason: this.xhr.statusText.replace(/\d+\s/, '')
+        });
       } else {
         this.safelyCallback("failure");
       }
@@ -188,4 +191,5 @@ type RemoteBody = string | FormData;
 
 interface RemoteResponse {
   status: number;
+  reason: string;
 }

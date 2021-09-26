@@ -130,4 +130,19 @@ describe("onSuccess() callback", function() {
 
     expect(successCallback.mock.calls[0][0]).toHaveProperty('status', 200);
   });
+
+  it("yields the reason to the callback", async function() {
+    const successCallback = jest.fn();
+
+    mock.get("/", { status: 200, reason: "OK" });
+
+    await new Promise(function(resolve) {
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onSuccess(successCallback);
+      remoteRequest.onFinish(() => resolve(true));
+      remoteRequest.send();
+    });
+
+    expect(successCallback.mock.calls[0][0]).toHaveProperty('reason', 'OK');
+  });
 });
