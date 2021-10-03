@@ -237,4 +237,23 @@ describe("onSuccess() callback", function() {
     expect(successCallback.mock.calls[0][0]).toHaveProperty('body')
     expect(successCallback.mock.calls[0][0].body).toBeInstanceOf(Object);
   });
+
+  it("yields the raw body to the callback upon absence of Content-Type", async function() {
+    const successCallback = jest.fn((remoteResponse: RemoteResponse) => {});
+
+    mock.get("/", {
+      status: 200,
+      body: 'Lorem ipsum.'
+    });
+
+    await new Promise(function(resolve) {
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onSuccess(successCallback);
+      remoteRequest.onFinish(() => resolve(true));
+      remoteRequest.send();
+    });
+
+    expect(successCallback.mock.calls[0][0]).toHaveProperty('body')
+    expect(typeof successCallback.mock.calls[0][0].body).toBe('string');
+  });
 });
