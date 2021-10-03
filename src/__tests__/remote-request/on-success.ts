@@ -1,6 +1,6 @@
 import mock from "xhr-mock";
 
-import RemoteRequest from "../../remote-request";
+import RemoteRequest, { RemoteResponse } from "../../remote-request";
 
 beforeAll(function() {
   mock.setup()
@@ -144,5 +144,35 @@ describe("onSuccess() callback", function() {
     });
 
     expect(successCallback.mock.calls[0][0]).toHaveProperty('reason', 'OK');
+  });
+
+  it("yields the HTML body to the callback as HTMLDocument", async function() {
+    const successCallback = jest.fn((remoteResponse: RemoteResponse) => {});
+
+    mock.get("/", {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+      body: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Testing</title>
+          </head>
+          <body>
+            <div id="app">App</div>
+          </body>
+        </html>
+      `
+    });
+
+    await new Promise(function(resolve) {
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onSuccess(successCallback);
+      remoteRequest.onFinish(() => resolve(true));
+      remoteRequest.send();
+    });
+
+    expect(successCallback.mock.calls[0][0]).toHaveProperty('body')
+    expect(successCallback.mock.calls[0][0].body).toBeInstanceOf(HTMLDocument);
   });
 });

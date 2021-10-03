@@ -69,7 +69,8 @@ export default class RemoteRequest {
       if (Math.floor(this.xhr.status / 100) == 2) {
         this.safelyCallback("success", {
           status: this.xhr.status,
-          reason: this.xhr.statusText.replace(/\d+\s/, '')
+          reason: this.xhr.statusText.replace(/\d+\s/, ''),
+          body: this.processedResponse()
         });
       } else {
         this.safelyCallback("failure");
@@ -185,11 +186,24 @@ export default class RemoteRequest {
   private addEventListener(name: string, callback: () => void): void {
     this.xhr.addEventListener(name, callback.bind(this));
   }
+
+  private processedResponse(): HTMLDocument | string {
+    const mediaType = this.xhr.getResponseHeader('Content-Type')?.replace(/;.+/, '');
+
+    if (mediaType) {
+      if (mediaType.match(/html/)) {
+        return new DOMParser().parseFromString(this.xhr.responseText, <DOMParserSupportedType>mediaType);
+      }
+    }
+
+    return this.xhr.responseText;
+  }
 }
 
 type RemoteBody = string | FormData;
 
-interface RemoteResponse {
+export interface RemoteResponse {
   status: number;
   reason: string;
+  body: any;
 }
