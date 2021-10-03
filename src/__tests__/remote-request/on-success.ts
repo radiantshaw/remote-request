@@ -175,4 +175,37 @@ describe("onSuccess() callback", function() {
     expect(successCallback.mock.calls[0][0]).toHaveProperty('body')
     expect(successCallback.mock.calls[0][0].body).toBeInstanceOf(HTMLDocument);
   });
+
+  it("yields the XML body to the callback as Document", async function() {
+    const successCallback = jest.fn((remoteResponse: RemoteResponse) => {});
+
+    mock.get("/", {
+      status: 200,
+      headers: { 'Content-Type': 'text/xml' },
+      body: `
+        <?xml version="1.0" encoding="UTF-8"?>
+        <bookstore>
+          <book category="comics">
+            <title>Uncanny X-Men, Issue 1</title>
+            <author>Stan Lee</author>
+          </book>
+
+          <book category="novel">
+            <title>Goosebumps, Issue 7</title>
+            <author>R. L. Stine</author>
+          </book>
+        </bookstore>
+      `
+    });
+
+    await new Promise(function(resolve) {
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onSuccess(successCallback);
+      remoteRequest.onFinish(() => resolve(true));
+      remoteRequest.send();
+    });
+
+    expect(successCallback.mock.calls[0][0]).toHaveProperty('body')
+    expect(successCallback.mock.calls[0][0].body).toBeInstanceOf(Document);
+  });
 });
