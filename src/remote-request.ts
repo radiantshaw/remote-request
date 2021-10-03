@@ -193,6 +193,8 @@ export default class RemoteRequest {
     if (mediaType) {
       if (mediaType.match(/html|xml/)) {
         return new DOMParser().parseFromString(this.xhr.responseText, <DOMParserSupportedType>mediaType);
+      } else if (mediaType.match(/json/)) {
+        return JSON.parse(this.xhr.responseText);
       }
     }
 

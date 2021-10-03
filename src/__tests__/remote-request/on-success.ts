@@ -208,4 +208,33 @@ describe("onSuccess() callback", function() {
     expect(successCallback.mock.calls[0][0]).toHaveProperty('body')
     expect(successCallback.mock.calls[0][0].body).toBeInstanceOf(Document);
   });
+
+  it("yields the JSON body to the callback as Document", async function() {
+    const successCallback = jest.fn((remoteResponse: RemoteResponse) => {});
+
+    mock.get("/", {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: `
+        {
+          "superheroes": [
+            "batman",
+            "superman",
+            "captain-america",
+            "iron-man"
+          ]
+        }
+      `
+    });
+
+    await new Promise(function(resolve) {
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onSuccess(successCallback);
+      remoteRequest.onFinish(() => resolve(true));
+      remoteRequest.send();
+    });
+
+    expect(successCallback.mock.calls[0][0]).toHaveProperty('body')
+    expect(successCallback.mock.calls[0][0].body).toBeInstanceOf(Object);
+  });
 });
