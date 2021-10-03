@@ -70,12 +70,14 @@ export default class RemoteRequest {
         this.safelyCallback("success", {
           status: this.xhr.status,
           reason: this.xhr.statusText.replace(/\d+\s/, ''),
+          headers: this.xhr.getResponseHeader.bind(this.xhr),
           body: this.processedResponse()
         });
       } else {
         this.safelyCallback("failure", {
           status: this.xhr.status,
           reason: this.xhr.statusText.replace(/\d+\s/, ''),
+          headers: this.xhr.getResponseHeader.bind(this.xhr),
           body: this.processedResponse()
         });
       }

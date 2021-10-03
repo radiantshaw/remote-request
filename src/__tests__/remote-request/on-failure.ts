@@ -146,6 +146,30 @@ describe("onFailure() callback", function() {
     expect(failureCallback.mock.calls[0][0]).toHaveProperty('reason', 'Bad Request');
   });
 
+  it("yields the headers to the callback", async function() {
+    const failureCallback = jest.fn();
+
+    mock.get("/", {
+      status: 400,
+      headers: {
+        'Content-Type': 'text/plain',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+
+    await new Promise(function(resolve) {
+      const remoteRequest = new RemoteRequest("/");
+      remoteRequest.onFailure(failureCallback);
+      remoteRequest.onFinish(() => resolve(true));
+      remoteRequest.send();
+    });
+
+    expect(failureCallback.mock.calls[0][0]).toHaveProperty('headers');
+    expect(typeof failureCallback.mock.calls[0][0].headers).toEqual('function');
+    expect(failureCallback.mock.calls[0][0].headers('Content-Type')).toEqual('text/plain');
+    expect(failureCallback.mock.calls[0][0].headers('Access-Control-Allow-Origin')).toEqual('*');
+  });
+
   it("yields the HTML body to the callback as HTMLDocument", async function() {
     const failureCallback = jest.fn((remoteResponse: RemoteResponse) => {});
 
