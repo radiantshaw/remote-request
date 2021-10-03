@@ -82,7 +82,12 @@ export default class RemoteRequest {
         });
       }
 
-      this.safelyCallback("complete");
+      this.safelyCallback("complete", {
+        status: this.xhr.status,
+        reason: this.xhr.statusText.replace(/\d+\s/, ''),
+        headers: this.xhr.getResponseHeader.bind(this.xhr),
+        body: this.processedResponse()
+      });
       this.safelyCallback("finish");
     });
 
@@ -124,7 +129,7 @@ export default class RemoteRequest {
     this.callbacks["failure"] = callback;
   }
 
-  onComplete(callback: () => void) {
+  onComplete(callback: (remoteRequest: RemoteResponse) => void) {
     this.callbacks["complete"] = callback;
   }
 
