@@ -73,7 +73,11 @@ export default class RemoteRequest {
           body: this.processedResponse()
         });
       } else {
-        this.safelyCallback("failure");
+        this.safelyCallback("failure", {
+          status: this.xhr.status,
+          reason: this.xhr.statusText.replace(/\d+\s/, ''),
+          body: this.processedResponse()
+        });
       }
 
       this.safelyCallback("complete");
@@ -114,7 +118,7 @@ export default class RemoteRequest {
     this.callbacks["success"] = callback;
   }
 
-  onFailure(callback: () => void) {
+  onFailure(callback: (remoteResponse: RemoteResponse) => void) {
     this.callbacks["failure"] = callback;
   }
 
