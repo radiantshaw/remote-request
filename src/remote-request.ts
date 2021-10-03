@@ -191,9 +191,7 @@ export default class RemoteRequest {
     const mediaType = this.xhr.getResponseHeader('Content-Type')?.replace(/;.+/, '');
 
     if (mediaType) {
-      if (mediaType.match(/html/)) {
-        return new DOMParser().parseFromString(this.xhr.responseText, <DOMParserSupportedType>mediaType);
-      } else if (mediaType.match(/xml/)) {
+      if (mediaType.match(/html|xml/)) {
         return new DOMParser().parseFromString(this.xhr.responseText, <DOMParserSupportedType>mediaType);
       }
     }
