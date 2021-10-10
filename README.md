@@ -122,3 +122,25 @@ When the request gets completed, the callback methods will get called at the app
 #### `onFinish(callback: () => void)`
 
 - The very last callback which will get called after the callbacks registered via `onComplete()`, `onError()`, or `onTimeout()`
+
+### `timeout` setter
+
+By default, there's no timeout, and if the server doesn't respond in time, the request might go on forever. To stop this from happening, before calling the `send()` method, you can set the timeout as such:
+
+```js
+remoteRequest.timeout = 200;
+```
+
+The value is accepted in milliseconds.
+
+### `authorizeWith(username: string, password: string)`
+
+If the server you're trying to contact requires basic HTTP authentication, call this method before calling `send()` to set the credentials:
+
+```js
+remoteRequest.authorizeWith("apokolips", "omegalambda7xl9");
+```
+
+### `withCredentials` setter
+
+Cross-origin requests do not send credentials (like cookies) by default. To enable it, set this to `true`.
