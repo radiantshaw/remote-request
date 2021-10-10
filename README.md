@@ -22,7 +22,7 @@ $ yarn add @unobtrusive/remote-request
 
 To make a simple request, you create a `RemoteRequest` object with the given URL and method:
 
-```sh
+```js
 import RemoteRequest from "@unobtrusive/remote-request";
 
 const remoteRequest = new RemoteRequest("https://example.com", "GET");
@@ -30,7 +30,7 @@ const remoteRequest = new RemoteRequest("https://example.com", "GET");
 
 attach the necessary event handlers:
 
-```sh
+```js
 remoteRequest.onSuccess(function({ body }) {
   /* ... */
 });
@@ -42,7 +42,7 @@ remoteRequest.onComplete(function({ status }) {
 
 and call the `send()` method on it:
 
-```sh
+```js
 remoteRequest();
 ```
 
