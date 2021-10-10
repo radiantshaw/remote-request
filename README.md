@@ -43,7 +43,7 @@ remoteRequest.onComplete(function({ status }) {
 and call the `send()` method on it:
 
 ```js
-remoteRequest();
+remoteRequest.send();
 ```
 
 When the request gets completed, the callback methods will get called at the appropriate time.
