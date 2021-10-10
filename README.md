@@ -65,3 +65,22 @@ When the request gets completed, the callback methods will get called at the app
   - `XML`: Accepts XML document; specifically, sets the header `Accept: application/xml, text/xml`
   - `Script`: Accepts JSON structure; specifically, sets the header `Accept: text/javascript, application/javascript, application/ecmascript, application/x-ecmascript`
   - `JSON`: Accepts JavaScript code; specifically, sets the header `Accept: application/json, text/javascript`
+
+### Callbacks
+
+#### `onStart(callback: () => void | boolean)`
+
+- The first callback that gets called as soon as `send()` is called but before the request is even made
+- Accepts a `callback` method which can either return nothing, or return `true` or `false`
+- If the callback returns `false`, the subsequent callbacks are not called; if the callback returns `true` or nothing, the subsequent callbacks are called
+
+#### `onSending(callback: () => void | boolean)`
+
+- Gets called after the callback registered with `onStart()` is finished executing
+- Currently, works the same as `onStart()` but that will change when the package is fully released
+
+#### `onStop(callback: () => void)`
+
+- Gets called after either the callback registered with `onStart()`, or the callback registered with `onSending()` is finished executing, but only when the callback chain is _prematurely cancelled_, or _normally cancelled_
+- _Premature cancellation_ is when the callback registered with `onStart()` returns `false`; in that case, the `onStop()` callback will get called immediately after the `onStart()` callback
+- _Normal cancellation_ is when the callback registered with `onSending()` returns `false`; in that case, the `onStop()` callback will get called immediately after the `onSending()` callback
