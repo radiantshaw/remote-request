@@ -67,12 +67,27 @@ export default class RemoteRequest {
 
     this.addEventListener("load", function() {
       if (Math.floor(this.xhr.status / 100) == 2) {
-        this.safelyCallback("success");
+        this.safelyCallback("success", {
+          status: this.xhr.status,
+          reason: this.xhr.statusText.replace(/\d+\s/, ''),
+          headers: this.xhr.getResponseHeader.bind(this.xhr),
+          body: this.processedResponse()
+        });
       } else {
-        this.safelyCallback("failure");
+        this.safelyCallback("failure", {
+          status: this.xhr.status,
+          reason: this.xhr.statusText.replace(/\d+\s/, ''),
+          headers: this.xhr.getResponseHeader.bind(this.xhr),
+          body: this.processedResponse()
+        });
       }
 
-      this.safelyCallback("complete");
+      this.safelyCallback("complete", {
+        status: this.xhr.status,
+        reason: this.xhr.statusText.replace(/\d+\s/, ''),
+        headers: this.xhr.getResponseHeader.bind(this.xhr),
+        body: this.processedResponse()
+      });
       this.safelyCallback("finish");
     });
 
@@ -106,15 +121,15 @@ export default class RemoteRequest {
     this.callbacks["send"] = callback;
   }
 
-  onSuccess(callback: () => void) {
+  onSuccess(callback: (remoteResponse: RemoteResponse) => void) {
     this.callbacks["success"] = callback;
   }
 
-  onFailure(callback: () => void) {
+  onFailure(callback: (remoteResponse: RemoteResponse) => void) {
     this.callbacks["failure"] = callback;
   }
 
-  onComplete(callback: () => void) {
+  onComplete(callback: (remoteRequest: RemoteResponse) => void) {
     this.callbacks["complete"] = callback;
   }
 
@@ -175,13 +190,33 @@ export default class RemoteRequest {
     return this.method == "GET";
   }
 
-  private safelyCallback(name: string): void | boolean {
-    return this.callbacks[name] && this.callbacks[name]();
+  private safelyCallback(name: string, ...args: any[]): void | boolean {
+    return this.callbacks[name] && this.callbacks[name](...args);
   }
 
   private addEventListener(name: string, callback: () => void): void {
     this.xhr.addEventListener(name, callback.bind(this));
   }
+
+  private processedResponse(): HTMLDocument | string {
+    const mediaType = this.xhr.getResponseHeader('Content-Type')?.replace(/;.+/, '');
+
+    if (mediaType) {
+      if (mediaType.match(/html|xml/)) {
+        return new DOMParser().parseFromString(this.xhr.responseText, <DOMParserSupportedType>mediaType);
+      } else if (mediaType.match(/json/)) {
+        return JSON.parse(this.xhr.responseText);
+      }
+    }
+
+    return this.xhr.responseText;
+  }
 }
 
 type RemoteBody = string | FormData;
+
+export interface RemoteResponse {
+  status: number;
+  reason: string;
+  body: any;
+}
