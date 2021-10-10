@@ -84,3 +84,29 @@ When the request gets completed, the callback methods will get called at the app
 - Gets called after either the callback registered with `onStart()`, or the callback registered with `onSending()` is finished executing, but only when the callback chain is _prematurely cancelled_, or _normally cancelled_
 - _Premature cancellation_ is when the callback registered with `onStart()` returns `false`; in that case, the `onStop()` callback will get called immediately after the `onStart()` callback
 - _Normal cancellation_ is when the callback registered with `onSending()` returns `false`; in that case, the `onStop()` callback will get called immediately after the `onSending()` callback
+
+#### `onSend(callback: () => void)`
+
+- Gets called after the callback via `onSending()` is done executing, and the request has been sent to the URL
+
+#### `onSuccess(callback: (remoteResponse: RemoteResponse) => void)`
+
+- Gets called after the callback via `onSend()` is done executing; the response have been received, and the URL responded with a `2xx` status
+- The registered callback gets yielded the `RemoteResponse` object which has the following properties:
+  - `status: number`: The status code returned by the URL. For _e.g._: `201`
+  - `reason: string`: The reason returned by the URL. For _e.g._: `Created`
+  - `headers: (name: string) => string`: A function which will return the value of the header, given the header name. For _e.g._: `headers("Content-Type")` might return `text/html`
+  - `body: string | HTMLDocument | Document`: The body returned by the URL, parsed accordingly. For _e.g._:
+    - When body is HTML (`Content-Type: text/html`): Returns the `HTMLDocument` object
+    - When body is XML (`Content-Type: application/xml, text/xml`): Returns the `Document` object, or in some browsers, the `XMLDocument` object
+    - When the body is anything else: Returns the body as a `string`
+
+#### `onFailure(callback: (remoteResponse: RemoteResponse) => void)`
+
+- When the response status is not `2xx`, the callback registered via `onFailure()` get called instead of `onSuccess()`
+- Rest of the working is the same as `onSuccess()`
+
+#### `onComplete(callback: (remoteResponse: RemoteResponse) => void)`
+
+- Callback registered via `onComplete()` are called either after callback registered via `onSuccess()` (in case of response `2xx`), or after callback registered via `onFailure()` (in case of response not `2xx`)
+- Rest of the working is the same as `onSuccess()` or `onFailure()`
