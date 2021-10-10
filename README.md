@@ -110,3 +110,15 @@ When the request gets completed, the callback methods will get called at the app
 
 - Callback registered via `onComplete()` are called either after callback registered via `onSuccess()` (in case of response `2xx`), or after callback registered via `onFailure()` (in case of response not `2xx`)
 - Rest of the working is the same as `onSuccess()` or `onFailure()`
+
+#### `onError(callback: () => void)`
+
+- Gets called after the callback via `onSend()` is done executing, but some network failure happened
+
+#### `onTimeout(callback: () => void)`
+
+- Gets called after the callback via `onSend()` is done executing, but the URL took too long to respond and the request timed out
+
+#### `onFinish(callback: () => void)`
+
+- The very last callback which will get called after the callbacks registered via `onComplete()`, `onError()`, or `onTimeout()`
