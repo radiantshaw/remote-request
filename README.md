@@ -46,55 +46,55 @@ and call the `send()` method on it:
 remoteRequest.send();
 ```
 
-When the request gets completed, the callback methods will get called at the appropriate time.
+which will start the callback chain to be executed, if there are any callbacks registered.
 
 ### `constructor(url: string, method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" = "GET")`
 
 - Returns a new `RemoteRequest` object
-- Accepts the `url` to which and the `method` using which the request should be made
+- Accepts the `url` and the `method` using which the request should be made
 
 ### `send(body?: RemoteBody, responseType?: ResponseType)`
 
-- Sends the actual request and starts the callback process
-- Optionally accepts a `body` (which can be `string | FormData`) to send
+- Sends the actual request and starts execution of the callback chain
+- Optionally accepts a `body` (which can be a `string | FormData`) to send
 - Optionally accepts a `responseType` (which is the enum `ResponseType`) to expect from the server
 - `ResponseType` has the following values:
-  - `All`: Accepts all type of responses; specifically, sets the header `Accept: */*`
-  - `Text`: Accepts plain text; specifically, sets the header `Accept: text/plain`
-  - `HTML`: Accepts HTML document; specifically, sets the header `Accept: text/html`
-  - `XML`: Accepts XML document; specifically, sets the header `Accept: application/xml, text/xml`
-  - `Script`: Accepts JSON structure; specifically, sets the header `Accept: text/javascript, application/javascript, application/ecmascript, application/x-ecmascript`
-  - `JSON`: Accepts JavaScript code; specifically, sets the header `Accept: application/json, text/javascript`
+  - `All`: Expects all types of responses; specifically, sets the header `Accept: */*`
+  - `Text`: Expects a plain text response; specifically, sets the header `Accept: text/plain`
+  - `HTML`: Expects an HTML response; specifically, sets the header `Accept: text/html`
+  - `XML`: Expects an XML response; specifically, sets the header `Accept: application/xml, text/xml`
+  - `Script`: Expects a JSON response; specifically, sets the header `Accept: text/javascript, application/javascript, application/ecmascript, application/x-ecmascript`
+  - `JSON`: Accepts a JavaScript response; specifically, sets the header `Accept: application/json, text/javascript`
 
 ### Callbacks
 
 #### `onStart(callback: () => void | boolean)`
 
-- The first callback that gets called as soon as `send()` is called but before the request is even made
 - Accepts a `callback` method which can either return nothing, or return `true` or `false`
+- The callback registered via `onStart()` is the first to get executed after the `send()` method is called and the request is made
 - If the callback returns `false`, the subsequent callbacks are not called; if the callback returns `true` or nothing, the subsequent callbacks are called
 
 #### `onSending(callback: () => void | boolean)`
 
-- Gets called after the callback registered with `onStart()` is finished executing
+- The callback registered via `onSending()` gets called after the `onStart()` callback is finished executing but the request is not yet made
 - Currently, works the same as `onStart()` but that will change when the package is fully released
 
 #### `onStop(callback: () => void)`
 
-- Gets called after either the callback registered with `onStart()`, or the callback registered with `onSending()` is finished executing, but only when the callback chain is _prematurely cancelled_, or _normally cancelled_
-- _Premature cancellation_ is when the callback registered with `onStart()` returns `false`; in that case, the `onStop()` callback will get called immediately after the `onStart()` callback
-- _Normal cancellation_ is when the callback registered with `onSending()` returns `false`; in that case, the `onStop()` callback will get called immediately after the `onSending()` callback
+- The callback registered via `onStop()` gets called after either the `onStart()` callback, or the `onSending()` callback is finished executing, but only when the callback chain is _prematurely cancelled_, or _normally cancelled_
+  - _Premature cancellation_ is when the `onStart()` callback returns `false`; in that case, the `onStop()` callback will get called immediately after the `onStart()` callback
+  - _Normal cancellation_ is when the `onSending()` callback returns `false`; in that case, the `onStop()` callback will get called immediately after the `onSending()` callback
 
 #### `onSend(callback: () => void)`
 
-- Gets called after the callback via `onSending()` is done executing, and the request has been sent to the URL
+- The callback registered via `onSend()` gets called after the `onSending()` callback is done executing, and the request has been sent to the server
 
 #### `onSuccess(callback: (remoteResponse: RemoteResponse) => void)`
 
-- Gets called after the callback via `onSend()` is done executing; the response have been received, and the URL responded with a `2xx` status
-- The registered callback gets yielded the `RemoteResponse` object which has the following properties:
-  - `status: number`: The status code returned by the URL. For _e.g._: `201`
-  - `reason: string`: The reason returned by the URL. For _e.g._: `Created`
+- The callback registered via `onSuccess` gets called after the `onSend()` callback is done executing; the response have been received, and the server responded with a `2xx` status
+- The registered callback receives the `RemoteResponse` object which has the following properties:
+  - `status: number`: The status code returned by the server. For _e.g._: `201`
+  - `reason: string`: The reason returned by the server. For _e.g._: `Created`
   - `headers: (name: string) => string`: A function which will return the value of the header, given the header name. For _e.g._: `headers("Content-Type")` might return `text/html`
   - `body: string | HTMLDocument | Document`: The body returned by the URL, parsed accordingly. For _e.g._:
     - When body is HTML (`Content-Type: text/html`): Returns the `HTMLDocument` object
@@ -108,24 +108,24 @@ When the request gets completed, the callback methods will get called at the app
 
 #### `onComplete(callback: (remoteResponse: RemoteResponse) => void)`
 
-- Callback registered via `onComplete()` are called either after callback registered via `onSuccess()` (in case of response `2xx`), or after callback registered via `onFailure()` (in case of response not `2xx`)
+- The callback registered via `onComplete()` are called either after the `onSuccess()` callback (in case of response `2xx`), or after the `onFailure()` callback (in case of response not `2xx`)
 - Rest of the working is the same as `onSuccess()` or `onFailure()`
 
 #### `onError(callback: () => void)`
 
-- Gets called after the callback via `onSend()` is done executing, but some network failure happened
+- The callback registered via `onError()` gets called after the `onSend()` callback is done executing, but some network failure happened
 
 #### `onTimeout(callback: () => void)`
 
-- Gets called after the callback via `onSend()` is done executing, but the URL took too long to respond and the request timed out
+- The callback registered via `onTimeout()` gets called after the `onSend()` callback is done executing, but the server took too long to respond and the request timed out
 
 #### `onFinish(callback: () => void)`
 
-- The very last callback which will get called after the callbacks registered via `onComplete()`, `onError()`, or `onTimeout()`
+- The callback registered via `onFinish()` gets called at the very last after the `onComplete()`, `onError()`, or `onTimeout()` callbacks are executed
 
 ### `timeout` setter
 
-By default, there's no timeout, and if the server doesn't respond in time, the request might go on forever. To stop this from happening, before calling the `send()` method, you can set the timeout as such:
+By default, there's no timeout, so if the server doesn't respond in time, the request might go on forever. To stop this from happening, before calling the `send()` method, you can set the timeout as such:
 
 ```js
 remoteRequest.timeout = 200;
@@ -135,7 +135,7 @@ The value is accepted in milliseconds.
 
 ### `authorizeWith(username: string, password: string)`
 
-If the server you're trying to contact requires basic HTTP authentication, call this method before calling `send()` to set the credentials:
+If the server you're trying to contact requires basic HTTP authentication, call the `authorizeWith()` method before calling `send()` to set the credentials:
 
 ```js
 remoteRequest.authorizeWith("apokolips", "omegalambda7xl9");
