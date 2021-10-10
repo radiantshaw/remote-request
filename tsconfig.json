@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "target": "es5",
+    "outDir": "dist",
+    "declaration": true
+  },
+  "include": ["src/*"]
 }
