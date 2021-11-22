@@ -1,6 +1,6 @@
 {
-  "name": "remote-request",
-  "version": "1.0.0",
+  "name": "@unobtrusive/remote-request",
+  "version": "0.1.0-alpha.1",
   "description": "Utility object for making a remote request the Rails UJS way.",
   "main": "index.js",
   "scripts": {
