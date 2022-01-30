@@ -7,6 +7,10 @@
     "test": "jest --watchAll",
     "build": "tsc"
   },
+  "files": [
+    "index.js",
+    "dist/"
+  ],
   "keywords": [
     "remote",
     "request"
