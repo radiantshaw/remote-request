@@ -1,12 +1,16 @@
 {
   "name": "@unobtrusive/remote-request",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Utility object for making a remote request the Rails UJS way.",
   "main": "index.js",
   "scripts": {
     "test": "jest --watchAll",
     "build": "tsc"
   },
+  "files": [
+    "index.js",
+    "dist/"
+  ],
   "keywords": [
     "remote",
     "request"
